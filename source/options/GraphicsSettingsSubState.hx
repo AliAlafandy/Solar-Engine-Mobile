@@ -49,7 +49,7 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 			'globalAntialiasing',
 			'bool',
 			true);
-		//option.showBoyfriend = true; // check if the game will crash if this is uncommented, i don't know if it will but it might so just leave it commented for now
+		option.showBoyfriend = true; 
 		option.onChange = onChangeAntiAliasing; //Changing onChange is only needed if you want to make a special interaction after it changes the value
 		addOption(option);
 
