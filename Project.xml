@@ -216,6 +216,9 @@
                 </config>
 	</section>-->
 
+	<architecture name="armv7" exclude="arm64" if="android32" />
+	<architecture name="arm64" exclude="armv7" if="android64" />
+
 	<android target-sdk-version="29" if="android"/>
 	<android min-sdk-version="19" if="android"/>
 
