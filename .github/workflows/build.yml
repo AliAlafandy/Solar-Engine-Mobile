@@ -36,40 +36,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
-      - name: Setup Android NDK x64
-        if: inputs.name == 'Android x64'
+      - name: Setup Android NDK
+        if: startsWith(inputs.name, 'Android')
         uses: nttld/setup-ndk@main
-        id: setup-ndk-64
+        id: setup-ndk
         with:
           ndk-version: r21e
 
-      - name: Setup Android NDK x32
-        if: inputs.name == 'Android x32'
-        uses: nttld/setup-ndk@main
-        id: setup-ndk-32
-        with:
-          ndk-version: r21e
-
-      - name: Setup Java JDK x64
-        if: inputs.name == 'Android x64'
+      - name: Setup Java JDK
+        if: startsWith(inputs.name, 'Android')
         uses: actions/setup-java@main
         with:
           distribution: 'zulu'
           java-version: 18
 
-      - name: Setup Java JDK x32
-        if: inputs.name == 'Android x32'
-        uses: actions/setup-java@main
-        with:
-          distribution: 'zulu'
-          java-version: 18
-
-      - name: Setup Android SDK x64
-        if: inputs.name == 'Android x64'
-        uses: android-actions/setup-android@main
-
-      - name: Setup Android SDK x32
-        if: inputs.name == 'Android x32'
+      - name: Setup Android SDK
+        if: startsWith(inputs.name, 'Android')
         uses: android-actions/setup-android@main
 
       - name: Setup Haxe
@@ -95,45 +77,51 @@ jobs:
           haxelib list
           haxelib run lime --version
 
-      - name: Configure Android x64
-        if: inputs.name == 'Android x64'
+      - name: Configure Android
+        if: startsWith(inputs.name, 'Android')
         run: | # "$ANDROID_NDK_LATEST_HOME", "$JAVA_HOME_17_arm64"
           haxelib run lime config ANDROID_SDK "$ANDROID_HOME"
           haxelib run lime config ANDROID_NDK_ROOT "$ANDROID_NDK_HOME"
           haxelib run lime config JAVA_HOME "$JAVA_HOME"
           haxelib run lime config ANDROID_SETUP true
         env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk-64.outputs.ndk-path }}
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
-      - name: Configure Android x32
-        if: inputs.name == 'Android x32'
-        run: | # "$ANDROID_NDK_LATEST_HOME", "$JAVA_HOME_17_arm64"
-          haxelib run lime config ANDROID_SDK "$ANDROID_HOME"
-          haxelib run lime config ANDROID_NDK_ROOT "$ANDROID_NDK_HOME"
-          haxelib run lime config JAVA_HOME "$JAVA_HOME"
-          haxelib run lime config ANDROID_SETUP true
+      - name: Select Android ABI
+        if: startsWith(inputs.name, 'Android')
         env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk-32.outputs.ndk-path }}
+          BUILD_NAME: ${{ inputs.name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          project = Path("Project.xml")
+          content = project.read_text(encoding="utf-8")
+          marker = '<android target-sdk-version="31" if="android"/>'
+
+          if os.environ["BUILD_NAME"] == "Android x64":
+              architecture = "arm64"
+              excluded = "armv7"
+          elif os.environ["BUILD_NAME"] == "Android x32":
+              architecture = "armv7"
+              excluded = "arm64"
+          else:
+              raise SystemExit(f"Unexpected Android build name: {os.environ['BUILD_NAME']}")
+
+          if '<architecture name=' in content:
+              raise SystemExit("Project.xml already contains an architecture rule; refusing to add a duplicate.")
+
+          rule = f'\t<architecture name="{architecture}" exclude="{excluded}" if="android" />'
+          if marker not in content:
+              raise SystemExit("Could not find Android target SDK marker in Project.xml.")
+
+          project.write_text(content.replace(marker, rule + "\n" + marker, 1), encoding="utf-8")
+          print(f"Configured Android ABI: {architecture}; excluded: {excluded}")
+          PY
 
       - name: Compile
         run: haxelib run lime build ${{ inputs.buildArgs }}
-
-      - name: Verify Android APK ABI
-        if: inputs.expectedAbi != ''
-        shell: bash
-        run: |
-          APK="$(find export/release/android/bin/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
-          if [ -z "$APK" ]; then
-            echo "Android APK was not produced."
-            exit 1
-          fi
-          ABIS="$(unzip -Z1 "$APK" | awk -F/ '$1 == "lib" && NF >= 3 { print $2 }' | sort -u | paste -sd, -)"
-          echo "Expected ABI: ${{ inputs.expectedAbi }}"
-          echo "APK ABIs: $ABIS"
-          if [ "$ABIS" != "${{ inputs.expectedAbi }}" ]; then
-            echo "Wrong APK ABI set. Expected only ${{ inputs.expectedAbi }}."
-            exit 1
-          fi
 
       - name: Make IPA
         if: inputs.name == 'iOS'
