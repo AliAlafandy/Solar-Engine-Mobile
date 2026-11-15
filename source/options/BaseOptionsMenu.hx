@@ -147,10 +147,10 @@ class BaseOptionsMenu extends MusicBeatSubstate
 			}
 			// optionText.snapToPosition(); //Don't ignore me when i ask for not making a fucking pull request to uncomment this line ok
 
-			if (optionsArray[i].showBoyfriend && boyfriend == null)
+			/*if (optionsArray[i].showBoyfriend && boyfriend == null)
 			{
 				reloadBoyfriend();
-			}
+			}*/ // check if the game will crash if this is uncommented, i don't know if it will but it might so just leave it commented for now
 			updateTextFrom(optionsArray[i]);
 		}
 

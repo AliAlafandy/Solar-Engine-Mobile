@@ -182,9 +182,8 @@ class FreeplayState extends MusicBeatState
 
 		add(scoreText);
 
-		if (curSelected >= songs.length)
-			curSelected = 0;
-		bg.color = songs[curSelected].color;
+		if (curSelected >= songs.length) curSelected = 0;
+		bg.color = songs[curSelected].color; // i will kill myself if i let this be a bug
 		intendedColor = bg.color;
 
 		if (lastDifficultyName == '')
@@ -243,11 +242,15 @@ class FreeplayState extends MusicBeatState
 		#end
 	}
 
-	override function closeSubState()
-	{
+	override function closeSubState() {
 		changeSelection(0, false);
 		persistentUpdate = true;
 		super.closeSubState();
+
+		#if mobileC
+		removeVirtualPad();
+		addVirtualPad("LEFT_FULL", "A_B_C_X_Y_Z");
+		#end
 	}
 
 	public function addSong(songName:String, weekNum:Int, songCharacter:String, color:Int)

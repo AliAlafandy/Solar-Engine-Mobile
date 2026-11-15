@@ -175,13 +175,13 @@ class NotesSubState extends MusicBeatSubstate
 		FlxG.mouse.visible = true;
 	
 		#if mobileC
-		addVirtualPad(NONE, B_C);
+		addVirtualPad(NONE, A_B_C);
 		#end
 	}
 
 	function updateTipText()
 	{
-		tipTxt.text = "Press RELOAD to Reset the selected Note Part." + "\nPress CTRL to switch between Normal and Pixel mode.";
+		tipTxt.text = "Press A to Reset the selected Note Part." + "\nPress C to switch between Normal and Pixel mode.";
 	}
 
 	var _storedColor:FlxColor;
@@ -226,7 +226,13 @@ class NotesSubState extends MusicBeatSubstate
 			return;
 		}
 
-		if (FlxG.keys.justPressed.CONTROL)
+		if (FlxG.keys.justPressed.CONTROL || virtualPad.buttonC.justPressed)
+		{
+			onPixel = !onPixel;
+			spawnNotes();
+			updateNotes(true);
+			FlxG.sound.play(Paths.sound('scrollMenu'), 0.6);
+		}
 		{
 			onPixel = !onPixel;
 			spawnNotes();
@@ -450,7 +456,7 @@ class NotesSubState extends MusicBeatSubstate
 				}
 			}
 		}
-		else if ((controls.RESET || virtualPad.buttonC.justPressed) && hexTypeNum < 0)
+		else if ((controls.RESET || virtualPad.buttonA.justPressed) && hexTypeNum < 0)
 		{
 			setShaderColor(!onPixel ? deafaultArrowcolor[curSelectedNote][curSelectedMode] : ClientPrefs.defaultPixelRGB[curSelectedNote][curSelectedMode]);
 			FlxG.sound.play(Paths.sound('cancelMenu'), 0.6);
