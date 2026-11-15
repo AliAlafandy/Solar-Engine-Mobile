@@ -98,7 +98,7 @@ jobs:
 
           project = Path("Project.xml")
           content = project.read_text(encoding="utf-8")
-          marker = '<android target-sdk-version="31" if="android"/>'
+          marker = '<android target-sdk-version="29" if="android"/>'
 
           if os.environ["BUILD_NAME"] == "Android x64":
               architecture = "arm64"
